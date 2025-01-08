@@ -139,9 +139,9 @@ def perform_docking(smiles_list, PDB_ID):
                 '--center_x', str(center_x),
                 '--center_y', str(center_y),
                 '--center_z', str(center_z),
-                '--size_x', '20',
-                '--size_y', '20',
-                '--size_z', '20'
+                '--size_x', str(Size_x),
+                '--size_y', str(Size_y),
+                '--size_z', str(Size_z)
             ]
 
             print("Starting Vina docking...")
