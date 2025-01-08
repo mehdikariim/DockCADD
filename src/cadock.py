@@ -95,12 +95,20 @@ def perform_docking(smiles_list, PDB_ID):
     remove_hetatm(f'{folder_name}/{receptor_name}_dirty.pdb', f'{folder_name}/{receptor_name}.pdb')
 
     # Define Box (p2rank)
-    subprocess.run(['./p2rank_2.4.2/prank', 'predict', '-f', f'{folder_name}/{receptor_name}.pdb'], check=True)
+    p2rank_jar_path = os.path.join(os.getcwd(), 'p2rank_2.4.2', 'bin', 'p2rank.jar')
+    receptor_pdb = f'{folder_name}/{receptor_name}.pdb'
 
-    df = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_predictions.csv')
+    # Run p2rank using Java
+    subprocess.run(['java', '-jar', p2rank_jar_path, 'predict', '-f', receptor_pdb], check=True)
+
+    # Adjust the output path based on p2rank's actual output
+    predictions_csv = os.path.join(os.getcwd(), f'predict_{receptor_name}', f'{receptor_name}.pdb_predictions.csv')
+    residues_csv = os.path.join(os.getcwd(), f'predict_{receptor_name}', f'{receptor_name}.pdb_residues.csv')
+
+    df = pd.read_csv(predictions_csv)
     center_x, center_y, center_z = float(df['   center_x'].iloc[0]), float(df['   center_y'].iloc[0]), float(df['   center_z'].iloc[0])
 
-    pred = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_residues.csv')
+    pred = pd.read_csv(residues_csv)
     pocket1 = pred[pred[' pocket'] == 1]
     resi = '+'.join([str(i) for i in pocket1[' residue_label']])
 
