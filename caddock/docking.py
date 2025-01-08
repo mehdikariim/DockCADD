@@ -81,7 +81,7 @@ def perform_docking(smiles_list, PDB_ID):
     remove_hetatm(f'{folder_name}/{receptor_name}_dirty.pdb', f'{folder_name}/{receptor_name}.pdb')
 
     # Define Box using p2rank
-    !p2rank_2.4.2/prank predict -f {folder_name}/{receptor_name}.pdb
+    !./p2rank_2.4.2/prank predict -f {folder_name}/{receptor_name}.pdb
 
     df = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_predictions.csv')
     center_x, center_y, center_z = float(df['   center_x'].iloc[0]), float(df['   center_y'].iloc[0]), float(df['   center_z'].iloc[0])
