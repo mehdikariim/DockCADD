@@ -175,12 +175,20 @@ def visualize_results(smiles_list, receptor_name, folder_name):
     # Visualize Results
     for i in range(len(smiles_list)):
         cmd.reinitialize()
-        output = f"{receptor_name}_ligand_{i+1}.pdbqt"
-        cmd.load(f'{folder_name}/{output}')
+        # Use the correct file for visualization
+        best_ligand_file = f"{folder_name}/{receptor_name}_ligand_{i+1}_best.pdb"
+        
+        # Check if the file exists
+        if not os.path.exists(best_ligand_file):
+            print(f"Error: File not found: {best_ligand_file}")
+            continue
+        
+        # Load and visualize
+        cmd.load(best_ligand_file)
         cmd.load(receptor_pdb)
         cmd.show('cartoon')
-        cmd.color('cyan', 'all')
-        cmd.color('red', f"{output.split('.')[0]}")
+        cmd.color('cyan', receptor_pdb)
+        cmd.color('red', best_ligand_file.split('/')[-1].split('.')[0])
         cmd.set('ray_trace_frames', 1)
         output_image_path = f'{folder_name}/{receptor_name}_ligand_{i+1}_image.png'
         cmd.png(output_image_path)
@@ -189,7 +197,12 @@ def visualize_results(smiles_list, receptor_name, folder_name):
     # Alignment
     for i in range(len(smiles_list)):
         cmd.reinitialize()
-        cmd.load(f'{folder_name}/{receptor_name}_ligand_{i+1}_best.pdb', 'docking')
+        best_ligand_file = f"{folder_name}/{receptor_name}_ligand_{i+1}_best.pdb"
+        if not os.path.exists(best_ligand_file):
+            print(f"Error: File not found: {best_ligand_file}")
+            continue
+        
+        cmd.load(best_ligand_file, 'docking')
         cmd.color('cyan', 'docking')
         cmd.load(f'{folder_name}/{receptor_name}_dirty.pdb', 'RealStructure')
         cmd.color('green', 'RealStructure')
