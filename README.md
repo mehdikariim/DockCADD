@@ -46,13 +46,16 @@
    !bash scripts/setup.sh
    from src.cadock import perform_docking
 
+   Next
    # Define your SMILES list and PDB ID
    smiles_list = ["SMILES 1", "SMILES 2"]  # Replace with your SMILES
    PDB_ID = "PDB ID"  # Replace with your desired PDB ID
 
+   Next
    # Perform docking
    perform_docking(smiles_list, PDB_ID)
 
+   Next
    # Visualize results
    from src.cadock import visualize_results
    visualize_results(smiles_list, PDB_ID, 'docking_results')
