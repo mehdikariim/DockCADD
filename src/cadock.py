@@ -95,7 +95,7 @@ def perform_docking(smiles_list, PDB_ID):
     remove_hetatm(f'{folder_name}/{receptor_name}_dirty.pdb', f'{folder_name}/{receptor_name}.pdb')
 
     # Define Box (p2rank)
-    subprocess.run(['./p2rank_2.4.2/p2rank', 'predict', '-f', f'{folder_name}/{receptor_name}.pdb'], check=True)
+    subprocess.run(['./p2rank_2.4.2/prank', 'predict', '-f', f'{folder_name}/{receptor_name}.pdb'], check=True)
 
     df = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_predictions.csv')
     center_x, center_y, center_z = float(df['   center_x'].iloc[0]), float(df['   center_y'].iloc[0]), float(df['   center_z'].iloc[0])
