@@ -66,65 +66,88 @@ def perform_docking(smiles_list, PDB_ID):
     folder_name = 'docking_results'
     receptor_name = PDB_ID
 
+    # Create results folder
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
 
+    print(f"Receptor Name: {receptor_name}")
+    print(f"Number of ligands: {len(smiles_list)}")
+
+    # Generate and pre-process ligands
     valid_smiles = []
     for i, smiles in enumerate(smiles_list):
         pdb_filename = f'{folder_name}/ligand_{i+1}.pdb'
         if generate_minimized_pdb(smiles, pdb_filename):
             valid_smiles.append(smiles)
 
+    print(f"Number of valid SMILES processed: {len(valid_smiles)}")
+
+    # Download and pre-process receptor
     downloaded_pdb_path = download_pdb(PDB_ID, folder_name)
     os.rename(downloaded_pdb_path, f'{folder_name}/{receptor_name}_dirty.pdb')
 
+    # Remove HETATM from PDB file
     remove_hetatm(f'{folder_name}/{receptor_name}_dirty.pdb', f'{folder_name}/{receptor_name}.pdb')
 
-    # Define Box using p2rank
+    # Define docking box using p2rank
     p2rank_jar_path = os.path.join(os.getcwd(), 'p2rank_2.4.2', 'bin', 'p2rank.jar')
-    receptor_pdb = f'{folder_name}/{receptor_name}.pdb'
+    subprocess.run(['java', '-jar', p2rank_jar_path, 'predict', '-f', f'{folder_name}/{receptor_name}.pdb'], check=True)
 
-    # Run p2rank using Java
-    subprocess.run(['java', '-jar', p2rank_jar_path, 'predict', '-f', receptor_pdb], check=True)
-
-    # Adjust the output path based on p2rank's actual output
-    predictions_csv = os.path.join(os.getcwd(), f'predict_{receptor_name}', f'{receptor_name}.pdb_predictions.csv')
-    residues_csv = os.path.join(os.getcwd(), f'predict_{receptor_name}', f'{receptor_name}.pdb_residues.csv')
-
-    df = pd.read_csv(predictions_csv)
+    # Extract docking box center
+    df = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_predictions.csv')
     center_x, center_y, center_z = float(df['   center_x'].iloc[0]), float(df['   center_y'].iloc[0]), float(df['   center_z'].iloc[0])
-    pocket1 = pd.read_csv(residues_csv)
 
+    # Convert receptor to PDBQT format
+    receptor_pdb = f"{folder_name}/{receptor_name}.pdb"
     receptor_pdbqt = f"{folder_name}/{receptor_name}.pdbqt"
     convert_pdb_to_pdbqt_receptor(receptor_pdb, receptor_pdbqt)
 
+    # Open results file and process ligands
     results_file = f"{folder_name}/docking_results.txt"
     with open(results_file, 'w') as f:
-        f.write("SMILES,Docking Score\n")
+        f.write("SMILES,Docking Score\n")  # Write header
 
-    for i, smiles in enumerate(smiles_list):
-        ligand_pdb = f"{folder_name}/ligand_{i+1}.pdb"
-        ligand_pdbqt = f"{folder_name}/ligand_{i+1}.pdbqt"
-        convert_pdb_to_pdbqt_ligand(ligand_pdb, ligand_pdbqt)
+        for i, smiles in enumerate(smiles_list):
+            print(f"\nProcessing ligand {i+1} of {len(smiles_list)}")
+            print(f"SMILES: {smiles}")
 
-        vina_command = [
-            'vina',
-            '--receptor', receptor_pdbqt,
-            '--ligand', ligand_pdbqt,
-            '--out', f'{folder_name}/ligand_{i+1}_out.pdbqt',
-            '--center_x', str(center_x),
-            '--center_y', str(center_y),
-            '--center_z', str(center_z),
-            '--size_x', '20',
-            '--size_y', '20',
-            '--size_z', '20'
-        ]
-        run_command_with_output(vina_command, f'{folder_name}/log_{i+1}.txt')
+            ligand_pdb = f"{folder_name}/ligand_{i+1}.pdb"
+            ligand_pdbqt = f"{folder_name}/ligand_{i+1}.pdbqt"
 
-        with open(f'{folder_name}/log_{i+1}.txt', 'r') as log:
-            score = "N/A"
-            for line in log:
-                if line.startswith('   1'):
-                    score = line.split()[1]
-                    break
+            print("Converting ligand to PDBQT format...")
+            convert_pdb_to_pdbqt_ligand(ligand_pdb, ligand_pdbqt)
+            print("Ligand conversion complete.")
+
+            output = f"{folder_name}/ligand_{i+1}_out.pdbqt"
+            log_file = f"{folder_name}/vina_log_{i+1}.txt"
+            vina_command = [
+                'vina',
+                '--receptor', receptor_pdbqt,
+                '--ligand', ligand_pdbqt,
+                '--out', output,
+                '--center_x', str(center_x),
+                '--center_y', str(center_y),
+                '--center_z', str(center_z),
+                '--size_x', '20',
+                '--size_y', '20',
+                '--size_z', '20'
+            ]
+
+            print("Starting Vina docking...")
+            exit_code = run_command_with_output(vina_command, log_file)
+
+            if exit_code == 0:
+                print("Vina docking completed successfully.")
+                with open(log_file, 'r') as log:
+                    score = "N/A"
+                    for line in log:
+                        if line.startswith('   1'):
+                            score = line.split()[1]
+                            break
+                print(f"Best docking score: {score}")
+            else:
+                print(f"Error running Vina for ligand {i+1}. Check the log file for details.")
+                score = "Error"
+
+            # Write result to file
             f.write(f"{smiles},{score}\n")
