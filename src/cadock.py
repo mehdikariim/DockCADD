@@ -162,3 +162,32 @@ def perform_docking(smiles_list, PDB_ID):
 
             # Write result to file
             f.write(f"{smiles},{score}\n")
+def visualize_results(smiles_list, receptor_name, folder_name):
+    receptor_pdb = f"{folder_name}/{receptor_name}.pdb"
+
+    # Visualize Results
+    for i in range(len(smiles_list)):
+        cmd.reinitialize()
+        output = f"{receptor_name}_ligand_{i+1}.pdbqt"
+        cmd.load(f'{folder_name}/{output}')
+        cmd.load(receptor_pdb)
+        cmd.show('cartoon')
+        cmd.color('cyan', 'all')
+        cmd.color('red', f"{output.split('.')[0]}")
+        cmd.set('ray_trace_frames', 1)
+        output_image_path = f'{folder_name}/{receptor_name}_ligand_{i+1}_image.png'
+        cmd.png(output_image_path)
+        display(Image(output_image_path))
+
+    # Alignment
+    for i in range(len(smiles_list)):
+        cmd.reinitialize()
+        cmd.load(f'{folder_name}/{receptor_name}_ligand_{i+1}_best.pdb', 'docking')
+        cmd.color('cyan', 'docking')
+        cmd.load(f'{folder_name}/{receptor_name}_dirty.pdb', 'RealStructure')
+        cmd.color('green', 'RealStructure')
+        cmd.align('docking', 'RealStructure')
+        cmd.show('cartoon')
+        output_image_path = f'{folder_name}/alignment_ligand_{i+1}.png'
+        cmd.png(output_image_path)
+        display(Image(output_image_path))
