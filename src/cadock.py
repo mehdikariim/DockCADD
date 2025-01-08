@@ -162,6 +162,13 @@ def perform_docking(smiles_list, PDB_ID):
 
             # Write result to file
             f.write(f"{smiles},{score}\n")
+                        # Combine receptor and ligand into a single PDB file
+            cmd.reinitialize()
+            cmd.load(receptor_pdb)
+            cmd.load(f'{folder_name}/ligand_{i+1}_out.pdbqt')
+            cmd.save(f"{folder_name}/{receptor_name}_ligand_{i+1}_best.pdb")
+            print(f"Generated {receptor_name}_ligand_{i+1}_best.pdb")
+
 def visualize_results(smiles_list, receptor_name, folder_name):
     receptor_pdb = f"{folder_name}/{receptor_name}.pdb"
 
