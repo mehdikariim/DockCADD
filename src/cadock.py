@@ -110,35 +110,55 @@ def perform_docking(smiles_list, PDB_ID):
 
     receptor_pdb = f"{folder_name}/{receptor_name}.pdb"
     receptor_pdbqt = f"{folder_name}/{receptor_name}.pdbqt"
+
+    print("Converting receptor to PDBQT format...")
     convert_pdb_to_pdbqt_receptor(receptor_pdb, receptor_pdbqt)
+    print("Receptor conversion complete.")
 
     results_file = f"{folder_name}/docking_results.txt"
     with open(results_file, 'w') as f:
-        f.write("SMILES,Docking Score\n")
+        f.write("SMILES,Docking Score\n")  # Write header
 
-    for i, smiles in enumerate(smiles_list):
-        ligand_pdb = f"{folder_name}/ligand_{i+1}.pdb"
-        ligand_pdbqt = f"{folder_name}/ligand_{i+1}.pdbqt"
-        convert_pdb_to_pdbqt_ligand(ligand_pdb, ligand_pdbqt)
+        for i, smiles in enumerate(smiles_list):
+            print(f"\nProcessing ligand {i+1} of {len(smiles_list)}")
+            print(f"SMILES: {smiles}")
 
-        vina_command = [
-            'vina',
-            '--receptor', receptor_pdbqt,
-            '--ligand', ligand_pdbqt,
-            '--out', f'{folder_name}/ligand_{i+1}_out.pdbqt',
-            '--center_x', str(center_x),
-            '--center_y', str(center_y),
-            '--center_z', str(center_z),
-            '--size_x', '20',
-            '--size_y', '20',
-            '--size_z', '20'
-        ]
-        run_command_with_output(vina_command, f'{folder_name}/log_{i+1}.txt')
+            ligand_pdb = f"{folder_name}/ligand_{i+1}.pdb"
+            ligand_pdbqt = f"{folder_name}/ligand_{i+1}.pdbqt"
 
-        with open(f'{folder_name}/log_{i+1}.txt', 'r') as log:
-            score = "N/A"
-            for line in log:
-                if line.startswith('   1'):
-                    score = line.split()[1]
-                    break
-            f.write(f"{smiles},{score}\n")
+            print("Converting ligand to PDBQT format...")
+            convert_pdb_to_pdbqt_ligand(ligand_pdb, ligand_pdbqt)
+            print("Ligand conversion complete.")
+
+            output = f"{receptor_name}_ligand_{i+1}.pdbqt"
+            log_file = f"{folder_name}/vina_log_{i+1}.txt"
+            vina_command = [
+                'vina',
+                '--receptor', receptor_pdbqt,
+                '--ligand', ligand_pdbqt,
+                '--out', f'{folder_name}/{output}',
+                '--center_x', str(center_x),
+                '--center_y', str(center_y),
+                '--center_z', str(center_z),
+                '--size_x', '20',
+                '--size_y', '20',
+                '--size_z', '20'
+            ]
+
+            print("Starting Vina docking...")
+            exit_code = run_command_with_output(vina_command, log_file)
+
+            if exit_code == 0:
+                print("Vina docking completed successfully.")
+                with open(log_file, 'r') as log:
+                    score = "N/A"
+                    for line in log:
+                        if line.startswith('   1'):
+                            score = line.split()[1]
+                            break
+                print(f"Best docking score: {score}")
+            else:
+                print(f"Error running Vina for ligand {i+1}. Check the log file for details.")
+                score = "Error"
+
+            f.write(f"{smiles},{score}\n")  # Write result
