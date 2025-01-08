@@ -1,16 +1,13 @@
-# src/cadock.py
-
-# Import necessary libraries
-import pubchempy as pcp
+import os
+import subprocess
+import sys
 from rdkit import Chem
 from rdkit.Chem import AllChem
-import os
 from Bio.PDB import PDBList
 import pandas as pd
 import numpy as np
 from pymol import cmd
-import subprocess
-import sys
+from IPython.display import Image, display
 
 def generate_minimized_pdb(smiles, pdb_filename):
     mol = Chem.MolFromSmiles(smiles)
@@ -95,96 +92,53 @@ def perform_docking(smiles_list, PDB_ID):
     remove_hetatm(f'{folder_name}/{receptor_name}_dirty.pdb', f'{folder_name}/{receptor_name}.pdb')
 
     # Define Box (p2rank)
-    p2rank_jar_path = os.path.join(os.getcwd(), 'p2rank_2.4.2', 'bin', 'p2rank.jar')
-    receptor_pdb = f'{folder_name}/{receptor_name}.pdb'
+    p2rank_prank_path = os.path.join(os.getcwd(), 'p2rank_2.4.2', 'prank')
+    
+    # Ensure the prank script is executable
+    if not os.path.isfile(p2rank_prank_path):
+        raise FileNotFoundError(f"prank script not found at {p2rank_prank_path}")
+    if not os.access(p2rank_prank_path, os.X_OK):
+        os.chmod(p2rank_prank_path, 0o755)
 
-    # Run p2rank using Java
-    subprocess.run(['java', '-jar', p2rank_jar_path, 'predict', '-f', receptor_pdb], check=True)
+    # Run p2rank to predict binding pockets
+    subprocess.run([p2rank_prank_path, 'predict', '-f', f'{folder_name}/{receptor_name}.pdb'], check=True)
 
-    # Adjust the output path based on p2rank's actual output
-    predictions_csv = os.path.join(os.getcwd(), f'predict_{receptor_name}', f'{receptor_name}.pdb_predictions.csv')
-    residues_csv = os.path.join(os.getcwd(), f'predict_{receptor_name}', f'{receptor_name}.pdb_residues.csv')
-
-    df = pd.read_csv(predictions_csv)
+    # Read p2rank output
+    df = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_predictions.csv')
     center_x, center_y, center_z = float(df['   center_x'].iloc[0]), float(df['   center_y'].iloc[0]), float(df['   center_z'].iloc[0])
+    pocket1 = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_residues.csv')
 
-    pred = pd.read_csv(residues_csv)
-    pocket1 = pred[pred[' pocket'] == 1]
-    resi = '+'.join([str(i) for i in pocket1[' residue_label']])
-
-    cmd.load(f'{folder_name}/{receptor_name}.pdb')
-    cmd.select('pocket1', f'resi {resi}')
-    cmd.show('cartoon')
-    alpha_carbons = []
-    cmd.iterate_state(1, 'pocket1 and name CA', 'alpha_carbons.append([x, y, z])', space={'alpha_carbons': alpha_carbons})
-
-    alpha_carbons = np.array(alpha_carbons)
-    min_coords = np.min(alpha_carbons, axis=0)
-    max_coords = np.max(alpha_carbons, axis=0)
-    cube_size = max_coords - min_coords
-    Size_x, Size_y, Size_z = cube_size
-
-    print(center_x, center_y, center_z, Size_x, Size_y, Size_z)
-
-    # Docking
     receptor_pdb = f"{folder_name}/{receptor_name}.pdb"
     receptor_pdbqt = f"{folder_name}/{receptor_name}.pdbqt"
-
-    print("Converting receptor to PDBQT format...")
     convert_pdb_to_pdbqt_receptor(receptor_pdb, receptor_pdbqt)
-    print("Receptor conversion complete.")
 
     results_file = f"{folder_name}/docking_results.txt"
     with open(results_file, 'w') as f:
         f.write("SMILES,Docking Score\n")
 
     for i, smiles in enumerate(smiles_list):
-        print(f"\nProcessing ligand {i+1} of {len(smiles_list)}")
-        print(f"SMILES: {smiles}")
-
         ligand_pdb = f"{folder_name}/ligand_{i+1}.pdb"
         ligand_pdbqt = f"{folder_name}/ligand_{i+1}.pdbqt"
-
-        print("Converting ligand to PDBQT format...")
         convert_pdb_to_pdbqt_ligand(ligand_pdb, ligand_pdbqt)
-        print("Ligand conversion complete.")
 
-        output = f"{receptor_name}_ligand_{i+1}.pdbqt"
-        log_file = f"{folder_name}/vina_log_{i+1}.txt"
         vina_command = [
             'vina',
             '--receptor', receptor_pdbqt,
             '--ligand', ligand_pdbqt,
-            '--out', f'{folder_name}/{output}',
+            '--out', f'{folder_name}/ligand_{i+1}_out.pdbqt',
             '--center_x', str(center_x),
             '--center_y', str(center_y),
             '--center_z', str(center_z),
-            '--size_x', str(Size_x),
-            '--size_y', str(Size_y),
-            '--size_z', str(Size_z)
+            '--size_x', '20',
+            '--size_y', '20',
+            '--size_z', '20'
         ]
+        run_command_with_output(vina_command, f'{folder_name}/log_{i+1}.txt')
 
-        print("Starting Vina docking...")
-        exit_code = run_command_with_output(vina_command, log_file)
-
-        if exit_code == 0:
-            print("Vina docking completed successfully.")
-            with open(log_file, 'r') as log:
-                score = "N/A"
-                for line in log:
-                    if line.startswith('   1'):
-                        score = line.split()[1]
-                        break
-            print(f"Best docking score: {score}")
-        else:
-            print(f"Error running Vina for ligand {i+1}. Check the log file for details.")
-            score = "Error"
-
-        with open(results_file, 'a') as f:
+        with open(f'{folder_name}/log_{i+1}.txt', 'r') as log:
+            score = "N/A"
+            for line in log:
+                if line.startswith('   1'):
+                    score = line.split()[1]
+                    break
             f.write(f"{smiles},{score}\n")
-
-    print(f"\nDocking complete. Results have been saved to {results_file}")
-    print(f"Individual log files for each ligand are saved in the {folder_name} directory.")
-
-    # Visualization and Alignment are skipped as they require interactive display capabilities
-    # which are not suitable for Colab's backend execution without additional setup
