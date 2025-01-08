@@ -2,7 +2,7 @@
 
 # Update and install dependencies
 sudo apt-get update -y
-sudo apt-get install -y pymol openbabel wget tar
+sudo apt-get install -y pymol openbabel wget tar openjdk-11-jdk
 
 # Install Python libraries
 pip install --upgrade pip
