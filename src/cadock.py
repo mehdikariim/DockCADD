@@ -106,7 +106,6 @@ def perform_docking(smiles_list, PDB_ID):
     # Read p2rank output
     df = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_predictions.csv')
     center_x, center_y, center_z = float(df['   center_x'].iloc[0]), float(df['   center_y'].iloc[0]), float(df['   center_z'].iloc[0])
-    pocket1 = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_residues.csv')
 
     receptor_pdb = f"{folder_name}/{receptor_name}.pdb"
     receptor_pdbqt = f"{folder_name}/{receptor_name}.pdbqt"
@@ -130,13 +129,13 @@ def perform_docking(smiles_list, PDB_ID):
             convert_pdb_to_pdbqt_ligand(ligand_pdb, ligand_pdbqt)
             print("Ligand conversion complete.")
 
-            output = f"{receptor_name}_ligand_{i+1}.pdbqt"
+            output = f"{folder_name}/ligand_{i+1}_out.pdbqt"
             log_file = f"{folder_name}/vina_log_{i+1}.txt"
             vina_command = [
                 'vina',
                 '--receptor', receptor_pdbqt,
                 '--ligand', ligand_pdbqt,
-                '--out', f'{folder_name}/{output}',
+                '--out', output,
                 '--center_x', str(center_x),
                 '--center_y', str(center_y),
                 '--center_z', str(center_z),
@@ -161,4 +160,5 @@ def perform_docking(smiles_list, PDB_ID):
                 print(f"Error running Vina for ligand {i+1}. Check the log file for details.")
                 score = "Error"
 
-            f.write(f"{smiles},{score}\n")  # Write result
+            # Write result to file
+            f.write(f"{smiles},{score}\n")
