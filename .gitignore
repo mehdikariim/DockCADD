@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env
+
+# Data files
+data/*.pdb
+data/*.pdbqt
+
+# Logs
+*.log
+
+# p2rank output
+p2rank_2.4.2/test_output/
+
+# AutoDock Vina output
+docking_results/*.pdbqt
+docking_results/*.txt
+
+# Colab specific
+.ipynb_checkpoints/
