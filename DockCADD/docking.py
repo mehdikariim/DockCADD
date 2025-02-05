@@ -6,8 +6,6 @@ from rdkit.Chem import AllChem
 from Bio.PDB import PDBList
 import pandas as pd
 import numpy as np
-from pymol import cmd
-from IPython.display import Image, display
 
 def generate_minimized_pdb(smiles, pdb_filename):
     mol = Chem.MolFromSmiles(smiles)
