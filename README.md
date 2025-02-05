@@ -39,7 +39,7 @@
 
    ```python
    # Clone the Cadock repository
-   !git clone https://github.com/mehdikariim/Cadock.git
+   !git clone https://github.com/mehdikariim/DockCADD.git
    %cd DockCADD
 
    # Run the setup script
