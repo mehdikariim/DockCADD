@@ -55,7 +55,3 @@
    # Perform docking
    perform_docking(smiles_list, PDB_ID)
 
-   #Next
-   # Visualize results
-   from src.cadock import visualize_results
-   visualize_results(smiles_list, PDB_ID, 'docking_results')
