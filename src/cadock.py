@@ -16,18 +16,18 @@ def generate_minimized_pdb(smiles, pdb_filename):
     mol = Chem.AddHs(mol)
     try:
         AllChem.EmbedMolecule(mol, randomSeed=42)
-    except:
-        print(f"Failed to generate 3D coordinates for SMILES: {smiles}")
+    except Exception as e:
+        print(f"Failed to generate 3D coordinates for SMILES: {smiles}\nError: {e}")
         return False
     try:
         AllChem.UFFOptimizeMolecule(mol, maxIters=200)
-    except:
-        print(f"Energy minimization failed for SMILES: {smiles}")
+    except Exception as e:
+        print(f"Energy minimization failed for SMILES: {smiles}\nError: {e}")
         return False
     try:
         Chem.SanitizeMol(mol)
-    except:
-        print(f"Sanitization failed for SMILES: {smiles}")
+    except Exception as e:
+        print(f"Sanitization failed for SMILES: {smiles}\nError: {e}")
         return False
     Chem.MolToPDBFile(mol, pdb_filename)
     print(f"Minimized molecule saved as {pdb_filename}")
@@ -85,10 +85,12 @@ def perform_docking(smiles_list, PDB_ID):
 
     # Download and Pre-process Receptor
     downloaded_pdb_path = download_pdb(PDB_ID, folder_name)
-    os.rename(downloaded_pdb_path, f'{folder_name}/{receptor_name}_dirty.pdb')
+    receptor_dirty = f'{folder_name}/{receptor_name}_dirty.pdb'
+    os.rename(downloaded_pdb_path, receptor_dirty)
 
     # Remove HETATM from PDB file
-    remove_hetatm(f'{folder_name}/{receptor_name}_dirty.pdb', f'{folder_name}/{receptor_name}.pdb')
+    receptor_pdb = f'{folder_name}/{receptor_name}.pdb'
+    remove_hetatm(receptor_dirty, receptor_pdb)
 
     # Define Box (p2rank)
     p2rank_prank_path = os.path.join(os.getcwd(), 'p2rank_2.4.2', 'prank')
@@ -100,18 +102,25 @@ def perform_docking(smiles_list, PDB_ID):
         os.chmod(p2rank_prank_path, 0o755)
 
     # Run p2rank to predict binding pockets
-    subprocess.run([p2rank_prank_path, 'predict', '-f', f'{folder_name}/{receptor_name}.pdb'], check=True)
+    subprocess.run([p2rank_prank_path, 'predict', '-f', receptor_pdb], check=True)
 
-    # Read p2rank output
-    df = pd.read_csv(f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_predictions.csv')
-    center_x, center_y, center_z = float(df['   center_x'].iloc[0]), float(df['   center_y'].iloc[0]), float(df['   center_z'].iloc[0])
+    # Read p2rank output (ensure the path to the CSV file matches your p2rank output directory)
+    predictions_csv = f'p2rank_2.4.2/test_output/predict_{receptor_name}/{receptor_name}.pdb_predictions.csv'
+    df = pd.read_csv(predictions_csv)
+    # Adjust the column names if needed (e.g., strip spaces)
+    center_x = float(df['   center_x'].iloc[0])
+    center_y = float(df['   center_y'].iloc[0])
+    center_z = float(df['   center_z'].iloc[0])
 
-    receptor_pdb = f"{folder_name}/{receptor_name}.pdb"
     receptor_pdbqt = f"{folder_name}/{receptor_name}.pdbqt"
-
     print("Converting receptor to PDBQT format...")
     convert_pdb_to_pdbqt_receptor(receptor_pdb, receptor_pdbqt)
     print("Receptor conversion complete.")
+
+    # Define docking box dimensions (set to 20 x 20 x 20)
+    Size_x = 20
+    Size_y = 20
+    Size_z = 20
 
     results_file = f"{folder_name}/docking_results.txt"
     with open(results_file, 'w') as f:
@@ -131,7 +140,6 @@ def perform_docking(smiles_list, PDB_ID):
             output = f"{folder_name}/ligand_{i+1}_out.pdbqt"
             log_file = f"{folder_name}/vina_log_{i+1}.txt"
             
-            # Define the docking box sizes (ensure Size_x, Size_y, and Size_z are defined elsewhere)
             vina_command = [
                 'vina',
                 '--receptor', receptor_pdbqt,
@@ -153,8 +161,10 @@ def perform_docking(smiles_list, PDB_ID):
                 with open(log_file, 'r') as log:
                     score = "N/A"
                     for line in log:
-                        if line.startswith('   1'):
-                            score = line.split()[1]
+                        if line.strip().startswith('1'):
+                            parts = line.split()
+                            if len(parts) >= 2:
+                                score = parts[1]
                             break
                 print(f"Best docking score: {score}")
             else:
@@ -163,9 +173,4 @@ def perform_docking(smiles_list, PDB_ID):
 
             # Write result to file
             f.write(f"{smiles},{score}\n")
-            
-            # If you previously combined receptor and ligand files using PyMOL,
-            # you can either skip that step or implement an alternative method here.
-            # For now, we simply note the docking output file.
             print(f"Docking output saved as {output}")
-
