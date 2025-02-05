@@ -6,7 +6,6 @@ from rdkit.Chem import AllChem
 from Bio.PDB import PDBList
 import pandas as pd
 import numpy as np
-from pymol import cmd
 from IPython.display import Image, display
 
 def generate_minimized_pdb(smiles, pdb_filename):
@@ -131,6 +130,8 @@ def perform_docking(smiles_list, PDB_ID):
 
             output = f"{folder_name}/ligand_{i+1}_out.pdbqt"
             log_file = f"{folder_name}/vina_log_{i+1}.txt"
+            
+            # Define the docking box sizes (ensure Size_x, Size_y, and Size_z are defined elsewhere)
             vina_command = [
                 'vina',
                 '--receptor', receptor_pdbqt,
@@ -162,63 +163,9 @@ def perform_docking(smiles_list, PDB_ID):
 
             # Write result to file
             f.write(f"{smiles},{score}\n")
-                        # Combine receptor and ligand into a single PDB file
-            cmd.reinitialize()
-            cmd.load(receptor_pdb)
-            cmd.load(f'{folder_name}/ligand_{i+1}_out.pdbqt')
-            cmd.save(f"{folder_name}/{receptor_name}_ligand_{i+1}_best.pdb")
-            print(f"Generated {receptor_name}_ligand_{i+1}_best.pdb")
+            
+            # If you previously combined receptor and ligand files using PyMOL,
+            # you can either skip that step or implement an alternative method here.
+            # For now, we simply note the docking output file.
+            print(f"Docking output saved as {output}")
 
-def visualize_results(smiles_list, receptor_name, folder_name):
-    """
-    Visualize the docking results by loading the receptor and best docking poses.
-    
-    Parameters:
-    - smiles_list (list): List of SMILES strings for the ligands.
-    - receptor_name (str): PDB ID of the receptor.
-    - folder_name (str): Directory containing the docking results.
-    """
-    receptor_pdb = f"{folder_name}/{receptor_name}.pdb"
-
-    # Visualize Results
-    for i in range(len(smiles_list)):
-        cmd.reinitialize()
-        best_ligand_file = f"{folder_name}/{receptor_name}_ligand_{i+1}_best.pdb"
-
-        # Check if the best ligand file exists
-        if not os.path.exists(best_ligand_file):
-            print(f"Error: File not found: {best_ligand_file}")
-            continue
-
-        # Load and visualize
-        cmd.load(best_ligand_file, 'Ligand')
-        cmd.load(receptor_pdb, 'Receptor')
-        cmd.show('cartoon', 'Receptor')
-        cmd.color('cyan', 'Receptor')
-        cmd.show('sticks', 'Ligand')
-        cmd.color('red', 'Ligand')
-
-        # Save visualization as an image
-        output_image = f"{folder_name}/{receptor_name}_ligand_{i+1}_image.png"
-        cmd.png(output_image)
-        print(f"Generated visualization: {output_image}")
-        display(Image(output_image))
-
-    # Alignment (optional)
-    for i in range(len(smiles_list)):
-        cmd.reinitialize()
-        best_ligand_file = f"{folder_name}/{receptor_name}_ligand_{i+1}_best.pdb"
-        if not os.path.exists(best_ligand_file):
-            print(f"Error: File not found: {best_ligand_file}")
-            continue
-
-        cmd.load(best_ligand_file, 'Docking')
-        cmd.color('cyan', 'Docking')
-        cmd.load(f"{folder_name}/{receptor_name}_dirty.pdb", 'RealStructure')
-        cmd.color('green', 'RealStructure')
-        cmd.align('Docking', 'RealStructure')
-        cmd.show('cartoon')
-        aligned_image = f"{folder_name}/alignment_ligand_{i+1}.png"
-        cmd.png(aligned_image)
-        print(f"Generated alignment visualization: {aligned_image}")
-        display(Image(aligned_image))
