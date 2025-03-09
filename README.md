@@ -2,56 +2,69 @@
 
 **DockCADD** is a streamlined and automated computational framework designed to facilitate molecular docking and drug discovery. It requires minimal input from users and utilizes advanced tools to provide accurate docking results. 
 
+This new version of **DockCADD** is a lightweight, integrated workflow for structure-based drug design. It automatically prepares a receptor (extracting only a specified chain, with a fallback if the chain isn’t found), repairs missing residues/atoms via [PDBFixer](https://github.com/openmm/pdbfixer), predicts the binding pocket with [p2rank](https://github.com/rdk/p2rank), and docks ligands using [AutoDock Vina](https://github.com/ccsb-scripps/AutoDock-Vina). Ligands can be provided as a list of SMILES strings or as an SDF file, and multiple conformers are generated for each molecule using [RDKit](https://www.rdkit.org/). 
+
 ## Features
 
-- **Automation**: Reduces user intervention, making the process fast and reproducible.
-- **Efficiency**: Processes large compound libraries effectively.
-- **Cost-Effective**: Uses open-source tools, making it accessible for academic and industrial research.
-- **Integration**: Combines RDKit, P2Rank, and AutoDock Vina for robust molecular docking.
+- **Receptor Preparation**:  
+  - Downloads a protein structure from the PDB.
+  - Extracts only chain A (or falls back to the full structure if chain A isn’t found).
+  - Repairs missing residues, atoms, and adds hydrogens using PDBFixer.
 
-## Core Workflow
+- **Pocket Prediction**:  
+  - Uses p2rank to predict the binding pocket and extract its center.
 
-1. **Inputs**:
-   - **SMILES**: Simplified Molecular Input Line Entry System representing the chemical structure of ligands.
-   - **PDB ID**: Protein Data Bank Identifier specifying the target protein structure.
+- **Ligand Preparation**:  
+  - Accepts ligands as a list of SMILES strings and/or an SDF file.
+  - Generates multiple 3D conformers per ligand with RDKit.
+  - Writes each conformer to a separate PDB file.
 
-2. **Workflow**:
-   - **Ligand Preparation**: Generates 3D conformations, performs energy minimization, and converts ligands to PDBQT format.
-   - **Protein Preparation**: Retrieves and cleans the protein structure, identifies binding pockets, and defines a docking grid box.
-   - **Docking**: Utilizes AutoDock Vina for virtual screening, outputting docking scores and top binding poses.
+- **Docking**:  
+  - Converts the receptor and ligand files to PDBQT format using OpenBabel.
+  - Docks each ligand conformer with AutoDock Vina.
+  - Parses the best docking pose and merges it with the receptor to generate a final complex.
 
-3. **Output**:
-   - **Docking Scores**: Quantify binding affinity.
-   - **Ranked Ligands**: Based on docking performance.
-   - **Additional Data**: Binding poses and interaction details.
+- **Visualization**:  
+  - Includes an optional PyMOL visualization function to generate a static PNG snapshot of a final complex.
 
 ## Installation
 
-### Using Google Colab
+1. **Clone the Repository:**
 
-1. **Open Google Colab:**
+   ```bash
+   git clone https://github.com/<your-username>/DockcaddV2.git
+   cd DockcaddV2
 
-   Go to [Google Colab](https://colab.research.google.com/) and create a new notebook.
+2. **Run the Setup Script:**
 
-2. **Clone the Repository and Run Setup:**
+This script installs all system packages (e.g., PyMOL, OpenBabel, Java), AutoDock Vina, p2rank, and the required Python libraries (including PDBFixer, OpenMM, and RDKit).
 
-   In a new cell, run:
+   ```bash
+bash scripts/setup.sh
 
-   ```python
-   # Clone the Cadock repository
-   !git clone https://github.com/mehdikariim/DockCADD.git
-   %cd DockCADD
+3. **Usage:**
+You can use the provided Python package to perform docking. Below are two example usage scenarios:
 
-   # Run the setup script
-   !bash scripts/setup.sh
-   from src.cadock import perform_docking
+Example 1: **Docking Using a List of SMILES**
+from src.dockcadd import perform_docking
 
-   #Next
-   # Define your SMILES list and PDB ID
-   smiles_list = ["SMILES 1", "SMILES 2"]  # Replace with your SMILES
-   PDB_ID = "PDB ID"  # Replace with your desired PDB ID
+# Define your list of ligand SMILES and target receptor PDB ID
+smiles_list = ["CCOc1ccc(CC(=O)NC)cc1", "CCCC(=O)NCC1=CC=CC=C1"]
+pdb_id = "5ZMA"
 
-   #Next
-   # Perform docking
-   perform_docking(smiles_list, PDB_ID)
+# Run docking (generates 3 conformers per ligand by default)
+perform_docking(smiles_list=smiles_list, sdf_file=None, pdb_id=pdb_id, num_confs=3, docking_folder="docking_results")
+
+Example 2: **Docking Using an SDF File**
+from src.cadock import perform_docking, show_in_pymol
+
+# Provide the path to your SDF file containing ligands
+sdf_file = "path/to/your_ligands.sdf"
+pdb_id = "5ZMA"
+
+# Run docking using the SDF file (3 conformers per ligand)
+perform_docking(smiles_list=None, sdf_file=sdf_file, pdb_id=pdb_id, num_confs=3, docking_folder="docking_results")
+
+
+
 
