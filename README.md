@@ -70,5 +70,13 @@ Example 2: **Docking Using an SDF File**
     perform_docking(smiles_list=None, sdf_file=sdf_file, pdb_id=pdb_id, num_confs=3, docking_folder="docking_results")
 
 
+# License
+This project is licensed under the MIT License (or your chosen license).
+
+# Acknowledgments
+AutoDock Vina: AutoDock Vina 1.2.5
+p2rank: p2rank 2.4.2
+PDBFixer & OpenMM: PDBFixer
+RDKit: RDKit
 
 
