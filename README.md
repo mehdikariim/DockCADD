@@ -40,30 +40,32 @@ This new version of **DockCADD** is a lightweight, integrated workflow for struc
 This script installs all system packages (e.g., PyMOL, OpenBabel, Java), AutoDock Vina, p2rank, and the required Python libraries (including PDBFixer, OpenMM, and RDKit).
 
    ```bash
-bash scripts/setup.sh
+   bash scripts/setup.sh
 
 3. **Usage:**
 You can use the provided Python package to perform docking. Below are two example usage scenarios:
 
 Example 1: **Docking Using a List of SMILES**
-from src.dockcadd import perform_docking
+    ```bash
+    from src.dockcadd import perform_docking
 
-# Define your list of ligand SMILES and target receptor PDB ID
-smiles_list = ["CCOc1ccc(CC(=O)NC)cc1", "CCCC(=O)NCC1=CC=CC=C1"]
-pdb_id = "5ZMA"
+    # Define your list of ligand SMILES and target receptor PDB ID
+    smiles_list = ["CCOc1ccc(CC(=O)NC)cc1", "CCCC(=O)NCC1=CC=CC=C1"]
+    pdb_id = "5ZMA"
 
-# Run docking (generates 3 conformers per ligand by default)
-perform_docking(smiles_list=smiles_list, sdf_file=None, pdb_id=pdb_id, num_confs=3, docking_folder="docking_results")
+    # Run docking (generates 3 conformers per ligand by default)
+    perform_docking(smiles_list=smiles_list, sdf_file=None, pdb_id=pdb_id, num_confs=3, docking_folder="docking_results")
 
 Example 2: **Docking Using an SDF File**
-from src.cadock import perform_docking, show_in_pymol
-
-# Provide the path to your SDF file containing ligands
-sdf_file = "path/to/your_ligands.sdf"
-pdb_id = "5ZMA"
-
-# Run docking using the SDF file (3 conformers per ligand)
-perform_docking(smiles_list=None, sdf_file=sdf_file, pdb_id=pdb_id, num_confs=3, docking_folder="docking_results")
+    ```bash
+    from src.dockcadd import perform_docking
+    
+    # Provide the path to your SDF file containing ligands
+    sdf_file = "path/to/your_ligands.sdf"
+    pdb_id = "5ZMA"
+    
+    # Run docking using the SDF file (3 conformers per ligand)
+    perform_docking(smiles_list=None, sdf_file=sdf_file, pdb_id=pdb_id, num_confs=3, docking_folder="docking_results")
 
 
 
