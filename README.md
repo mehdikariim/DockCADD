@@ -32,8 +32,8 @@ This new version of **DockCADD** is a lightweight, integrated workflow for struc
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/<your-username>/DockcaddV2.git
-   cd DockCADD v2
+   git clone https://github.com/mehdikariim/DockCADD-v2.git
+   cd DockCADD-v2
 
 2. **Run the Setup Script:**
 
