@@ -71,7 +71,7 @@ Example 2: **Docking Using an SDF File**
 
 
 # License
-This project is licensed under the MIT License (or your chosen license).
+This project is licensed under the MIT License.
 
 # Acknowledgments
 AutoDock Vina: AutoDock Vina 1.2.5
