@@ -39,10 +39,9 @@ This new version of **DockCADD** is a lightweight, integrated workflow for struc
 
 This script installs all system packages (e.g., PyMOL, OpenBabel, Java), AutoDock Vina, p2rank, and the required Python libraries (including PDBFixer, OpenMM, and RDKit).
 
-   ```bash
-   bash scripts/setup.sh
-   ```bash
-## 2. **Run the Setup Script:**
+     ```bash
+     bash scripts/setup.sh
+
 2. **Run the Setup Script:**
 
 3. **Usage:**
