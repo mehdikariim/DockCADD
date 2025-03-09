@@ -41,6 +41,9 @@ This script installs all system packages (e.g., PyMOL, OpenBabel, Java), AutoDoc
 
    ```bash
    bash scripts/setup.sh
+   ```bash
+## 2. **Run the Setup Script:**
+2. **Run the Setup Script:**
 
 3. **Usage:**
 You can use the provided Python package to perform docking. Below are two example usage scenarios:
