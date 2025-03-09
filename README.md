@@ -1,6 +1,6 @@
-# DockCADD V2
+# DockCADD v2
 
-**DockCADD V2** is a streamlined and automated computational framework designed to facilitate molecular docking and drug discovery. It requires minimal input from users and utilizes advanced tools to provide accurate docking results. 
+**DockCADD v2** is a streamlined and automated computational framework designed to facilitate molecular docking and drug discovery. It requires minimal input from users and utilizes advanced tools to provide accurate docking results. 
 
 This new version of **DockCADD** is a lightweight, integrated workflow for structure-based drug design. It automatically prepares a receptor (extracting only a specified chain, with a fallback if the chain isn’t found), repairs missing residues/atoms via [PDBFixer](https://github.com/openmm/pdbfixer), predicts the binding pocket with [p2rank](https://github.com/rdk/p2rank), and docks ligands using [AutoDock Vina](https://github.com/ccsb-scripps/AutoDock-Vina). Ligands can be provided as a list of SMILES strings or as an SDF file, and multiple conformers are generated for each molecule using [RDKit](https://www.rdkit.org/). 
 
@@ -33,7 +33,7 @@ This new version of **DockCADD** is a lightweight, integrated workflow for struc
 
    ```bash
    git clone https://github.com/<your-username>/DockcaddV2.git
-   cd DockCADD
+   cd DockCADD v2
 
 2. **Run the Setup Script:**
 
