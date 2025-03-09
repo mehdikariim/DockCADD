@@ -73,6 +73,11 @@ Example 2: **Docking Using an SDF File**
 # License
 This project is licensed under the MIT License.
 
+# Citations
+If you use DockcaddV2 in your work, please cite our article:
+Karim, E.M.et al (2025). DockCADD: A streamlined In Silico pipeline for the identification of potent Ribosomal S6 Kinase 2 (RSK2) inhibitors. Scientific African, e02581.
+https://doi.org/10.1016/j.sciaf.2025.e02581
+
 # Acknowledgments
 AutoDock Vina: AutoDock Vina 1.2.5
 p2rank: p2rank 2.4.2
