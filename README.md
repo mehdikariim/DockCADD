@@ -33,7 +33,7 @@ This new version of **DockCADD** is a lightweight, integrated workflow for struc
 
    ```bash
    git clone https://github.com/<your-username>/DockcaddV2.git
-   cd DockCADDV2
+   cd DockCADD
 
 2. **Run the Setup Script:**
 
